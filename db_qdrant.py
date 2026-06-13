@@ -8,21 +8,25 @@ DIM = 768  # text-embedding-004 output dimension
 _client = None
 
 
+def _is_local(url: str) -> bool:
+    return any(h in url for h in ("localhost", "127.0.0.1", "0.0.0.0"))
+
+
 def _get_client() -> QdrantClient:
     global _client
     if _client is None:
         url = os.getenv("QDRANT_URL", "http://localhost:6333")
         api_key = os.getenv("QDRANT_API_KEY") or None
 
-        # Railway expone Qdrant con TLS aunque la URL diga http://.
-        # Si hay api_key asumimos entorno cloud → forzar https.
-        if api_key and url.startswith("http://"):
+        # Railway (y cualquier proxy cloud) termina TLS aunque la URL
+        # interna diga http://. Corregir siempre salvo entorno local.
+        if not _is_local(url) and url.startswith("http://"):
             url = url.replace("http://", "https://", 1)
 
         _client = QdrantClient(
             url=url,
             api_key=api_key,
-            prefer_grpc=False,  # REST sobre HTTPS; gRPC requiere puerto 6334
+            prefer_grpc=False,  # REST sobre HTTPS; gRPC usa puerto 6334
         )
     return _client
 
