@@ -11,9 +11,18 @@ _client = None
 def _get_client() -> QdrantClient:
     global _client
     if _client is None:
+        url = os.getenv("QDRANT_URL", "http://localhost:6333")
+        api_key = os.getenv("QDRANT_API_KEY") or None
+
+        # Railway expone Qdrant con TLS aunque la URL diga http://.
+        # Si hay api_key asumimos entorno cloud → forzar https.
+        if api_key and url.startswith("http://"):
+            url = url.replace("http://", "https://", 1)
+
         _client = QdrantClient(
-            url=os.getenv("QDRANT_URL", "http://localhost:6333"),
-            api_key=os.getenv("QDRANT_API_KEY"),
+            url=url,
+            api_key=api_key,
+            prefer_grpc=False,  # REST sobre HTTPS; gRPC requiere puerto 6334
         )
     return _client
 
