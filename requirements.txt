@@ -1,0 +1,8 @@
+streamlit
+google-genai
+psycopg2-binary
+sqlalchemy
+pymongo
+redis
+qdrant-client
+python-dotenv
